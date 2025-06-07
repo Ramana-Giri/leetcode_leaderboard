@@ -4,7 +4,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const departmentFilter = document.getElementById('departmentFilter');
   const leaderboardBody = document.getElementById('leaderboardBody');
   const refreshButton = document.getElementById('refreshScores');
+  const weeklyImprovementsBody = document.getElementById('weeklyImprovementsBody');
+  const toggleWeeklyImprovements = document.getElementById('toggleWeeklyImprovements');
   let currentPage = 1;
+  let showingMoreWeekly = false;
 
   let debounceTimer;
 
@@ -93,6 +96,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Function to fetch and display weekly improvements
+  async function fetchWeeklyImprovements(limit = 5) {
+    try {
+      const response = await fetch(`/weekly-improvements?limit=${limit}`);
+      const data = await response.json();
+      
+      weeklyImprovementsBody.innerHTML = '';
+      if (data.length === 0) {
+        weeklyImprovementsBody.innerHTML = `
+          <tr>
+            <td colspan="3" class="text-center">No improvements yet this week</td>
+          </tr>
+        `;
+        return;
+      }
+      
+      data.forEach((entry, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${index + 1}</td>
+          <td><a href="https://leetcode.com/u/${entry.leetcode_username}/" target="_blank" class="leetcode-link">${entry.name}</a></td>
+          <td class="text-success">+${entry.improvement}</td>
+        `;
+        weeklyImprovementsBody.appendChild(row);
+      });
+    } catch (error) {
+      console.error('Error fetching weekly improvements:', error);
+      weeklyImprovementsBody.innerHTML = `
+        <tr>
+          <td colspan="3" class="text-center text-danger">Error loading improvements</td>
+        </tr>
+      `;
+    }
+  }
+
+  // Handle weekly improvements toggle
+  toggleWeeklyImprovements.addEventListener('click', () => {
+    showingMoreWeekly = !showingMoreWeekly;
+    fetchWeeklyImprovements(showingMoreWeekly ? 10 : 5);
+    toggleWeeklyImprovements.textContent = showingMoreWeekly ? 'Show Less' : 'Show More';
+  });
+
   // Function to update scores
   async function updateScores() {
     try {
@@ -170,7 +215,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Handle refresh button
   refreshButton.addEventListener('click', updateScores);
 
-  // Initial fetch
+  // Initial fetch for both leaderboard and weekly improvements
   fetchLeaderboard(1);
+  fetchWeeklyImprovements(5);
 });
   

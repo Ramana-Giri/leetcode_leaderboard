@@ -15,32 +15,7 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'leetcode_leaderboard'
 });
 
-// Create table if not exists
-pool.query(`
-  CREATE TABLE IF NOT EXISTS leaderboard (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    department VARCHAR(50) NOT NULL,
-    leetcode_username VARCHAR(100) NOT NULL,
-    score INTEGER,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  );
-
-  CREATE TABLE IF NOT EXISTS weekly_scores (
-    id SERIAL PRIMARY KEY,
-    leaderboard_id INTEGER REFERENCES leaderboard(id),
-    week_start_date DATE NOT NULL,
-    score INTEGER NOT NULL,
-    improvement INTEGER DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  );
-`);
-
-// Middleware
-app.use(express.json());
-app.use(express.static('public'));
-
-// ✅ Single clean definition of getLeetCodeScore
+// Function to get LeetCode score
 async function getLeetCodeScore(username) {
   const query = {
     query: `
@@ -78,6 +53,14 @@ async function getLeetCodeScore(username) {
   }
 }
 
+// Function to get current week's Monday date
+function getCurrentWeekMonday() {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = now.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+  return new Date(now.setDate(diff));
+}
+
 // Function to update all scores
 async function updateAllScores() {
   try {
@@ -99,12 +82,82 @@ async function updateAllScores() {
   }
 }
 
-// Function to get current week's Monday date
-function getCurrentWeekMonday() {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
-  return new Date(now.setDate(diff));
+// Initialize database tables
+async function initializeDatabase() {
+  try {
+    // Create leaderboard table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS leaderboard (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        department VARCHAR(50) NOT NULL,
+        leetcode_username VARCHAR(100) NOT NULL,
+        score INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Create weekly_scores table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS weekly_scores (
+        id SERIAL PRIMARY KEY,
+        leaderboard_id INTEGER REFERENCES leaderboard(id),
+        week_start_date DATE NOT NULL,
+        score INTEGER NOT NULL,
+        improvement INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Add unique constraint to weekly_scores if it doesn't exist
+    try {
+      await pool.query(`
+        ALTER TABLE weekly_scores 
+        ADD CONSTRAINT unique_weekly_score 
+        UNIQUE (leaderboard_id, week_start_date);
+      `);
+    } catch (error) {
+      // Ignore error if constraint already exists
+      if (!error.message.includes('already exists')) {
+        throw error;
+      }
+    }
+
+    console.log('Database tables initialized successfully');
+  } catch (error) {
+    console.error('Error initializing database:', error);
+    process.exit(1); // Exit if database initialization fails
+  }
+}
+
+// Function to initialize weekly scores for existing users
+async function initializeWeeklyScores() {
+  try {
+    const currentMonday = getCurrentWeekMonday();
+    
+    // Get all users
+    const users = await pool.query('SELECT id, score FROM leaderboard');
+    
+    for (const user of users.rows) {
+      // Check if weekly score already exists for this week
+      const existingScore = await pool.query(
+        'SELECT id FROM weekly_scores WHERE leaderboard_id = $1 AND week_start_date = $2',
+        [user.id, currentMonday]
+      );
+      
+      if (existingScore.rows.length === 0) {
+        // Insert initial weekly score with 0 improvement
+        await pool.query(
+          `INSERT INTO weekly_scores (leaderboard_id, week_start_date, score, improvement)
+           VALUES ($1, $2, $3, 0)`,
+          [user.id, currentMonday, user.score]
+        );
+      }
+    }
+    console.log('Weekly scores initialized for existing users');
+  } catch (error) {
+    console.error('Error initializing weekly scores:', error);
+  }
 }
 
 // Function to update weekly scores
@@ -112,14 +165,17 @@ async function updateWeeklyScores() {
   const currentMonday = getCurrentWeekMonday();
   
   try {
-    // Get all users
+    // First, update all scores from LeetCode
+    await updateAllScores();
+    
+    // Then get all users with their updated scores
     const users = await pool.query('SELECT id, leetcode_username, score FROM leaderboard');
     
     for (const user of users.rows) {
       // Get last week's score
       const lastWeekScore = await pool.query(
-        'SELECT score FROM weekly_scores WHERE leaderboard_id = $1 ORDER BY week_start_date DESC LIMIT 1',
-        [user.id]
+        'SELECT score FROM weekly_scores WHERE leaderboard_id = $1 AND week_start_date < $2 ORDER BY week_start_date DESC LIMIT 1',
+        [user.id, currentMonday]
       );
       
       const lastScore = lastWeekScore.rows[0]?.score || 0;
@@ -140,150 +196,166 @@ async function updateWeeklyScores() {
   }
 }
 
-// Add unique constraint to weekly_scores
-pool.query(`
-  ALTER TABLE weekly_scores 
-  ADD CONSTRAINT unique_weekly_score 
-  UNIQUE (leaderboard_id, week_start_date);
-`);
-
-// Update scores every 5 minutes
-setInterval(updateAllScores, 5 * 60 * 1000);
-
-// Update weekly scores every Monday at midnight
-const scheduleWeeklyUpdate = () => {
-  const now = new Date();
-  const monday = getCurrentWeekMonday();
-  const timeUntilMonday = monday.getTime() - now.getTime();
+// Initialize database before starting the server
+initializeDatabase().then(async () => {
+  // Initialize weekly scores for existing users
+  await initializeWeeklyScores();
   
-  setTimeout(() => {
-    updateWeeklyScores();
-    // Schedule next update
-    setInterval(updateWeeklyScores, 7 * 24 * 60 * 60 * 1000);
-  }, timeUntilMonday);
-};
+  // Middleware
+  app.use(express.json());
+  app.use(express.static('public'));
 
-scheduleWeeklyUpdate();
+  // Update scores every 5 minutes
+  setInterval(updateAllScores, 5 * 60 * 1000);
 
-// Add new endpoint for weekly improvements
-app.get('/weekly-improvements', async (req, res) => {
-  try {
-    const { limit = 5 } = req.query;
-    const currentMonday = getCurrentWeekMonday();
+  // Update weekly scores every Monday at midnight
+  const scheduleWeeklyUpdate = () => {
+    const now = new Date();
+    const monday = getCurrentWeekMonday();
+    const timeUntilMonday = monday.getTime() - now.getTime();
     
-    const result = await pool.query(`
-      SELECT l.name, l.department, l.leetcode_username, ws.improvement
-      FROM weekly_scores ws
-      JOIN leaderboard l ON l.id = ws.leaderboard_id
-      WHERE ws.week_start_date = $1
-      ORDER BY ws.improvement DESC
-      LIMIT $2
-    `, [currentMonday, limit]);
-    
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Error fetching weekly improvements:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+    setTimeout(() => {
+      updateWeeklyScores();
+      // Schedule next update
+      setInterval(updateWeeklyScores, 7 * 24 * 60 * 60 * 1000);
+    }, timeUntilMonday);
+  };
 
-// Get leaderboard with search, sort, and filter
-app.get('/leaderboard', async (req, res) => {
-  try {
-    const { search, sort = 'desc', department, page = 1 } = req.query;
-    const limit = 30;
-    const offset = (page - 1) * limit;
-    
-    let query = 'SELECT * FROM leaderboard';
-    const params = [];
-    const conditions = [];
+  scheduleWeeklyUpdate();
 
-    if (search) {
-      conditions.push(`name ILIKE $${params.length + 1}`);
-      params.push(`%${search}%`);
-    }
-
-    if (department) {
-      conditions.push(`department = $${params.length + 1}`);
-      params.push(department);
-    }
-
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
-    }
-
-    // Get total count for pagination
-    const countQuery = query.replace('SELECT *', 'SELECT COUNT(*)');
-    const countResult = await pool.query(countQuery, params);
-    const totalCount = parseInt(countResult.rows[0].count);
-
-    query += ` ORDER BY score ${sort === 'asc' ? 'ASC' : 'DESC'}`;
-    query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
-    params.push(limit, offset);
-
-    const result = await pool.query(query, params);
-    res.json({
-      data: result.rows,
-      pagination: {
-        total: totalCount,
-        page: parseInt(page),
-        limit: limit,
-        totalPages: Math.ceil(totalCount / limit)
+  // Add new endpoint for weekly improvements
+  app.get('/weekly-improvements', async (req, res) => {
+    try {
+      const { limit = 5 } = req.query;
+      const currentMonday = getCurrentWeekMonday();
+      const now = new Date();
+      
+      // Only update scores if it's Monday
+      const isMonday = now.getDay() === 1; // 1 represents Monday
+      if (isMonday) {
+        await updateAllScores();
+        await updateWeeklyScores();
       }
-    });
-  } catch (error) {
-    console.error('Error fetching leaderboard:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Endpoint to manually trigger score updates
-app.post('/update-scores', async (req, res) => {
-  try {
-    await updateAllScores();
-    res.json({ message: 'Scores updated successfully' });
-  } catch (error) {
-    console.error('Error updating scores:', error);
-    res.status(500).json({ error: 'Failed to update scores' });
-  }
-});
-
-app.post('/submit', async (req, res) => {
-  const { name, department, leetcodeUsername } = req.body;
-
-  try {
-    // Check if LeetCode username already exists
-    const existingUser = await pool.query(
-      'SELECT * FROM leaderboard WHERE leetcode_username = $1',
-      [leetcodeUsername]
-    );
-
-    if (existingUser.rows.length > 0) {
-      return res.status(400).json({ error: 'LeetCode profile already exists' });
+      
+      // Get the weekly improvements
+      const result = await pool.query(`
+        SELECT l.name, l.department, l.leetcode_username, ws.improvement
+        FROM weekly_scores ws
+        JOIN leaderboard l ON l.id = ws.leaderboard_id
+        WHERE ws.week_start_date = $1
+        AND ws.improvement > 0
+        ORDER BY ws.improvement DESC
+        LIMIT $2
+      `, [currentMonday, limit]);
+      
+      res.json(result.rows);
+    } catch (error) {
+      console.error('Error fetching weekly improvements:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
+  });
 
-    const score = await getLeetCodeScore(leetcodeUsername);
-    if (score === null) {
-      return res.status(400).json({ error: 'Invalid LeetCode username' });
+  // Get leaderboard with search, sort, and filter
+  app.get('/leaderboard', async (req, res) => {
+    try {
+      const { search, sort = 'desc', department, page = 1 } = req.query;
+      const limit = 30;
+      const offset = (page - 1) * limit;
+      
+      let query = 'SELECT * FROM leaderboard';
+      const params = [];
+      const conditions = [];
+
+      if (search) {
+        conditions.push(`name ILIKE $${params.length + 1}`);
+        params.push(`%${search}%`);
+      }
+
+      if (department) {
+        conditions.push(`department = $${params.length + 1}`);
+        params.push(department);
+      }
+
+      if (conditions.length > 0) {
+        query += ' WHERE ' + conditions.join(' AND ');
+      }
+
+      // Get total count for pagination
+      const countQuery = query.replace('SELECT *', 'SELECT COUNT(*)');
+      const countResult = await pool.query(countQuery, params);
+      const totalCount = parseInt(countResult.rows[0].count);
+
+      query += ` ORDER BY score ${sort === 'asc' ? 'ASC' : 'DESC'}`;
+      query += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+      params.push(limit, offset);
+
+      const result = await pool.query(query, params);
+      res.json({
+        data: result.rows,
+        pagination: {
+          total: totalCount,
+          page: parseInt(page),
+          limit: limit,
+          totalPages: Math.ceil(totalCount / limit)
+        }
+      });
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      res.status(500).json({ error: 'Internal server error' });
     }
+  });
 
-    await pool.query(
-      'INSERT INTO leaderboard (name, department, leetcode_username, score) VALUES ($1, $2, $3, $4)',
-      [name, department, leetcodeUsername, score]
-    );
-    res.sendStatus(201);
-  } catch (error) {
-    console.error('Error submitting entry:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+  // Endpoint to manually trigger score updates
+  app.post('/update-scores', async (req, res) => {
+    try {
+      await updateAllScores();
+      res.json({ message: 'Scores updated successfully' });
+    } catch (error) {
+      console.error('Error updating scores:', error);
+      res.status(500).json({ error: 'Failed to update scores' });
+    }
+  });
 
-// Routes
-app.get('/', (req, res) => {
+  app.post('/submit', async (req, res) => {
+    const { name, department, leetcodeUsername } = req.body;
+
+    try {
+      // Check if LeetCode username already exists
+      const existingUser = await pool.query(
+        'SELECT * FROM leaderboard WHERE leetcode_username = $1',
+        [leetcodeUsername]
+      );
+
+      if (existingUser.rows.length > 0) {
+        return res.status(400).json({ error: 'LeetCode profile already exists' });
+      }
+
+      const score = await getLeetCodeScore(leetcodeUsername);
+      if (score === null) {
+        return res.status(400).json({ error: 'Invalid LeetCode username' });
+      }
+
+      await pool.query(
+        'INSERT INTO leaderboard (name, department, leetcode_username, score) VALUES ($1, $2, $3, $4)',
+        [name, department, leetcodeUsername, score]
+      );
+      res.sendStatus(201);
+    } catch (error) {
+      console.error('Error submitting entry:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
+
+  // Routes
+  app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+  });
 
-// Start server
-app.listen(PORT, () => {
+  // Start server
+  app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+  });
+}).catch(error => {
+  console.error('Failed to initialize database:', error);
+  process.exit(1);
 });

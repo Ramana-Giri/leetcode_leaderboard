@@ -65,24 +65,45 @@
       <!-- Form Container -->
       <div class="col-lg-4">
         <div class="form-container p-4">
-          <h2 class="h4 mb-4">Add New Entry</h2>
-          <form id="submissionForm">
-            <div class="mb-3">
-              <input type="text" id="name" class="form-control" placeholder="Your Name" required>
+          <!-- Weekly Improvements Section -->
+          <div class="weekly-improvements mb-4">
+            <h2 class="h4 mb-3">Weekly Ranking</h2>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>Score</th>
+                  </tr>
+                </thead>
+                <tbody id="weeklyImprovementsBody"></tbody>
+              </table>
             </div>
-            <div class="mb-3">
-              <select id="department" class="form-select" required>
-                <option value="">Select Department</option>
-                <option value="cse">CSE</option>
-                <option value="it">IT</option>
-                <option value="aids">AIDS</option>
-              </select>
-            </div>
-            <div class="mb-3">
-              <input type="text" id="leetcodeUsername" class="form-control" placeholder="LeetCode Username" required>
-            </div>
-            <button type="submit" class="btn btn-submit w-100">Submit</button>
-          </form>
+            <button id="toggleWeeklyImprovements" class="btn btn-link text-warning p-0 mt-2">Show More</button>
+          </div>
+
+          <!-- Add New Entry Section -->
+          <div class="add-entry">
+            <h2 class="h4 mb-4">Add New Entry</h2>
+            <form id="submissionForm">
+              <div class="mb-3">
+                <input type="text" id="name" class="form-control" placeholder="Your Name" required>
+              </div>
+              <div class="mb-3">
+                <select id="department" class="form-select" required>
+                  <option value="">Select Department</option>
+                  <option value="cse">CSE</option>
+                  <option value="it">IT</option>
+                  <option value="aids">AIDS</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <input type="text" id="leetcodeUsername" class="form-control" placeholder="LeetCode Username" required>
+              </div>
+              <button type="submit" class="btn btn-submit w-100">Submit</button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

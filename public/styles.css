@@ -154,4 +154,55 @@ h1, h2, h3, h4, h5, h6 {
   background-color: rgb(30, 30, 30) !important;
   border-color: #444 !important;
   color: #666 !important;
+}
+
+/* Weekly Improvements Styles */
+.weekly-improvements {
+  background-color: rgb(35, 35, 35);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 2rem;
+}
+
+.weekly-improvements .table {
+  margin-bottom: 0;
+}
+
+.weekly-improvements .table-sm td,
+.weekly-improvements .table-sm th {
+  padding: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.weekly-improvements .text-success {
+  color: #28a745 !important;
+}
+
+.weekly-improvements .btn-link {
+  text-decoration: none;
+}
+
+.weekly-improvements .btn-link:hover {
+  color: #e69115 !important;
+}
+
+/* Add Entry Section Styles */
+.add-entry {
+  background-color: rgb(35, 35, 35);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.add-entry .form-control,
+.add-entry .form-select {
+  background-color: rgb(40, 40, 40) !important;
+  border: 1px solid #444 !important;
+  color: #fff !important;
+}
+
+.add-entry .form-control:focus,
+.add-entry .form-select:focus {
+  background-color: rgb(45, 45, 45) !important;
+  border-color: #FFA116 !important;
+  box-shadow: 0 0 0 0.25rem rgba(255, 161, 22, 0.25) !important;
 } 
