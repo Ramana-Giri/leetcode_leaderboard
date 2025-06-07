@@ -12,7 +12,7 @@
   <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-  <div class="container-fluid " style="padding:10%;">
+  <div class="container-fluid bg-image" style="padding:5% 10%;">
     <h1 class="text-center "><SPAN style="color: #FFA116;">LeetCode</SPAN> Leaderboard</h1>
     <p class="text-center mb-4">Panimalar Engineering College Chennai City Campus</p>
     <div class="row g-4">
@@ -22,12 +22,12 @@
           <!-- Controls -->
           <div class="controls p-3 mb-4">
             <div class="row g-3">
-              <div class="col-md-8">
+              <div class="col-md-6">
                 <div class="search-box">
                   <input type="text" id="searchInput" class="form-control" placeholder="Search by name...">
                 </div>
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <div class="filter-box">
                   <select id="departmentFilter" class="form-select">
                     <option value="">All Departments</option>
@@ -36,6 +36,11 @@
                     <option value="aids">AIDS</option>
                   </select>
                 </div>
+              </div>
+              <div class="col-md-3">
+                <button id="refreshScores" class="btn btn-submit w-100">
+                  <i class="fas fa-sync-alt"></i> Refresh Scores
+                </button>
               </div>
             </div>
           </div>
@@ -83,6 +88,8 @@
     </div>
   </div>
 
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
   <!-- Bootstrap JS Bundle with Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Custom JS -->

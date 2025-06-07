@@ -13,12 +13,12 @@ A web-based leaderboard application for tracking and displaying LeetCode scores 
 
 ## Technologies Used
 
-- Node.js
-- Express.js
 - HTML5
 - CSS3
 - JavaScript
 - Bootstrap 5.3.0
+- Node.js
+- Express.js
 - Google Fonts (Poppins)
 
 ## Prerequisites
