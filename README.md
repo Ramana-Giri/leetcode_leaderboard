@@ -1,32 +1,55 @@
-# LeetCode Leaderboard
+# LeetCode Leaderboard 🏆
 
-A web-based leaderboard application for tracking and displaying LeetCode scores of students from Panimalar Engineering College Chennai City Campus.
+![LeetCode Leaderboard Banner](screenshots/banner.png)
 
-## Features
+A modern web-based leaderboard application for tracking and displaying LeetCode scores of students from Panimalar Engineering College Chennai City Campus. The application provides real-time updates, filtering capabilities, and an intuitive user interface.
 
-- 📊 Real-time leaderboard display
-- 🔍 Search functionality by student name
+## 📸 Screenshots
+
+### Main Dashboard
+![Main Dashboard](screenshots/dashboard.png)
+
+### Weekly Rankings
+![Weekly Rankings](screenshots/weekly-rankings.png)
+
+### Add New Entry
+![New Entry View](screenshots/new-entry.png)
+
+## ✨ Features
+
+- 📊 Real-time leaderboard display with dynamic updates
+- 🔍 Advanced search functionality by student name
 - 🏢 Department-wise filtering (CSE, IT, AIDS)
-- ➕ Easy submission form for new entries
-- 📱 Responsive design for all devices
-- 🎨 Modern and clean user interface
+- 📈 Weekly improvement tracking
+- ➕ Streamlined submission form for new entries
+- 📱 Fully responsive design for all devices
+- 🎨 Modern and clean user interface with LeetCode-inspired theme
+- 🔄 Automatic score refresh functionality
 
-## Technologies Used
+## 🛠️ Technologies Used
 
-- HTML5
-- CSS3
-- JavaScript
-- Bootstrap 5.3.0
-- Node.js
-- Express.js
-- Google Fonts (Poppins)
+- **Frontend:**
+  - HTML5
+  - CSS3
+  - JavaScript (ES6+)
+  - Bootstrap 5.3.0
+  - Google Fonts (Poppins)
+  - Font Awesome Icons
 
-## Prerequisites
+- **Backend:**
+  - Node.js
+  - Express.js
+  - RESTful API architecture
+
+## 🚀 Getting Started
+
+### Prerequisites
 
 - Node.js (v14 or higher)
 - npm (Node Package Manager)
+- Git
 
-## Setup Instructions
+### Installation
 
 1. Clone the repository:
 ```bash
@@ -50,30 +73,62 @@ npm run dev
 
 5. Open your browser and visit `http://localhost:3000`
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 leetcode-leaderboard/
 ├── public/
-│   ├── index.html
-│   ├── styles.css
-│   └── script.js
-├── server.js
-├── package.json
-└── README.md
+│   ├── index.html          # Main HTML file
+│   ├── styles.css          # Custom styles
+│   └── script.js           # Frontend JavaScript
+├── server.js               # Backend server
+├── package.json            # Project dependencies
+├── screenshots/            # Project screenshots
+└── README.md              # Project documentation
 ```
 
-## Usage
+## 💡 Usage Guide
 
-1. View the leaderboard in the main section
-2. Use the search box to find specific students
-3. Filter results by department using the dropdown
-4. Add new entries using the submission form on the right
+1. **Viewing the Leaderboard**
+   - The main dashboard displays the current rankings
+   - Scores are automatically updated
+   - Use the refresh button to manually update scores
 
-## Contributing
+2. **Searching and Filtering**
+   - Use the search box to find specific students
+   - Filter results by department using the dropdown menu
+   - Combine search and filters for precise results
 
-Feel free to submit issues and enhancement requests!
+3. **Adding New Entries**
+   - Fill out the submission form on the right
+   - Provide name, department, and LeetCode username
+   - Submit to add your entry to the leaderboard
 
-## Contact
+4. **Weekly Rankings**
+   - View weekly improvements in the side panel
+   - Click "Show More" to expand the weekly rankings
+   - Track progress over time
 
-For any queries or suggestions, please open an issue in the repository. 
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📞 Contact
+
+For any queries or suggestions:
+- Open an issue in the repository
+- Contact the development team
+
+---
+
+Made with ❤️ by Panimalar Engineering College Chennai City Campus 
