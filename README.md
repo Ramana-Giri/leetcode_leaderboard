@@ -49,6 +49,28 @@ A modern web-based leaderboard application for tracking and displaying LeetCode 
 - npm (Node Package Manager)
 - Git
 
+### Environment Setup
+
+1. Create a `.env` file in the root directory:
+```bash
+touch .env
+```
+
+2. Add the following environment variables to your `.env` file:
+```env
+# Server Configuration
+PORT=3000
+
+# Database Configuration
+DB_USER=your_database_username
+DB_PASSWORD=your_database_password
+DB_HOST=localhost
+DB_PORT=27017
+DB_NAME=leetcode_leaderboard
+```
+
+Note: Make sure to replace the placeholder values with your actual configuration values. Never commit the `.env` file to version control.
+
 ### Installation
 
 1. Clone the repository:
@@ -118,17 +140,3 @@ Contributions are welcome! Please feel free to submit a Pull Request. For major 
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📞 Contact
-
-For any queries or suggestions:
-- Open an issue in the repository
-- Contact the development team
-
----
-
-Made with ❤️ by Panimalar Engineering College Chennai City Campus 
