@@ -2,7 +2,7 @@
 
 ![LeetCode Leaderboard Banner](screenshots/banner.png)
 
-A modern web-based leaderboard application for tracking and displaying LeetCode scores of students from Panimalar Engineering College Chennai City Campus. The application provides real-time updates, filtering capabilities, and an intuitive user interface.
+A modern web-based leaderboard application for tracking and displaying LeetCode scores. The application provides real-time updates, filtering capabilities, and an intuitive user interface.
 
 ## 📸 Screenshots
 
